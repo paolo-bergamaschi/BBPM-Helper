@@ -9,17 +9,22 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onCommand:bbpm-helper.helloWorld"
-  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "bbpm-helper.helloWorld",
-        "title": "Hello World"
+        "command": "bbpm-helper.scaffolding",
+        "title": "scaffolding delle cartelle"
       }
-    ]
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "bbpm-helper.scaffolding",
+          "when": "explorerResourceIsFolder"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
