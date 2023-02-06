@@ -7,9 +7,6 @@ Quasta estensione serve per fornire comportamenti aggiuntivi per il gruppo "supp
 ### Scaffolding cartelle
 
 
-![Scaffolding cartelle](images/scaffoldingMenu.png)
-
-
 ## Requirements
 
 Nessun requirement particolare
