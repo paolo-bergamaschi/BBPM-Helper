@@ -77,7 +77,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 		const date = new Date();
 		const defaultYear = date.getFullYear().toString();
-		const defaultMonth = date.getMonth().toString().padStart(2, '0');
+		const defaultMonth = (date.getMonth() +1).toString().padStart(2, '0');
 
 		const yearAndMonth = await promptUserForInput(/^[0-9]{4}_[0-9]{2}$/, "Anno e Mese di riferimento in formato YYYY_MM: (default, anno e mese correnti)", `${defaultYear}_${defaultMonth}`);
 		if (!yearAndMonth) { return; }
