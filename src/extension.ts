@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 
 
-function createFolderStructure(folderPath: string, yearAndMonth:string, changeRequest:string, serviceName: string, version: string, serviceType: string): void {
+function createFolderStructure(folderPath: string, yearAndMonth: string, changeRequest: string, serviceName: string, version: string, serviceType: string): void {
 
 	const foldersToCheck = [
 		`${folderPath}/appunti`,
@@ -76,39 +76,66 @@ export function activate(context: vscode.ExtensionContext) {
 			return vscode.window.showInformationMessage('Seleziona una cartella prima di usare questo comando');
 		}
 
+		const regex4Groups = /^(.+\\(?:(?<year_and_month>20[0-9]{2}_[01][0-9])_(?<change_request>[^\\]+))?(?:\\(?<service_name>[A-Z0-9]{5}_[A-Za-z0-9]+))?(?:\\(?<service_version>v[0-9]+\.[0-9]+))?)$/;
+		let match: RegExpExecArray | null;
+
+		let yearAndMonth: string | undefined;
+		let changeRequest: string | undefined;
+		let serviceName: string | undefined;
+		let serviceVersion: string | undefined;
+
+		match = regex4Groups.exec(folder.fsPath);
+		if (match !== null) {
+			console.log(`Match found year_and_month: ${match.groups!.year_and_month}`);
+			console.log(`Match found change_request: ${match.groups!.change_request}`);
+			console.log(`Match found service_name: ${match.groups!.service_name}`);
+			console.log(`Match found service_version: ${match.groups!.service_version}`);
+			yearAndMonth = match.groups!.year_and_month;
+			changeRequest = match.groups!.change_request;
+			serviceName = match.groups!.service_name;
+			serviceVersion = match.groups!.service_version;
+		}
+
 		const date = new Date();
 		const defaultYear = date.getFullYear().toString();
-		const defaultMonth = (date.getMonth() +1).toString().padStart(2, '0');
+		const defaultMonth = (date.getMonth() + 1).toString().padStart(2, '0');
 
-		const yearAndMonth = await promptUserForInput(/^[0-9]{4}_[0-9]{2}$/, "Anno e Mese di riferimento in formato YYYY_MM: (default, anno e mese correnti)", `${defaultYear}_${defaultMonth}`);
+		if (!yearAndMonth) {
+			yearAndMonth = await promptUserForInput(/^[0-9]{4}_[0-9]{2}$/, "Anno e Mese di riferimento in formato YYYY_MM: (default, anno e mese correnti)", `${defaultYear}_${defaultMonth}`);
+		}
 		if (!yearAndMonth) { return; }
-		
-		const changeRequest = await promptUserForInput(/^[0-9A-Za-z_]+$/, "Nome CR (default: PrimaEsposizione", "PrimaEsposizione");
+
+		if (!changeRequest) {
+			changeRequest = await promptUserForInput(/^[0-9A-Za-z_]+$/, "Nome CR (default: PrimaEsposizione", "PrimaEsposizione");
+		}
 		if (!changeRequest) { return; }
 
-		let serviceName = await promptUserForInput(/^[A-Z0-9]{5}_[A-Z][A-Za-z0-9]+$/, "Nome del servizio: in formato XXXXX_NomeServizio(API|Service)");
+		if (!serviceName) {
+			serviceName = await promptUserForInput(/^[A-Z0-9]{5}_[A-Z][A-Za-z0-9]+$/, "Nome del servizio: in formato XXXXX_NomeServizio(API|Service)");
+		}
 		if (!serviceName) { return; }
 
-		if(!/^[A-Z0-9]{5}_[A-Z][A-Za-z0-9]+(API|Service)$/.test(serviceName))
-		{
+		if (!/^[A-Z0-9]{5}_[A-Z][A-Za-z0-9]+(API|Service)$/.test(serviceName)) {
 			const serviceSubfixes = ['Service', 'API'];
 			await vscode.window.showQuickPick(serviceSubfixes, { placeHolder: 'Tipo del Servizio:' }).then(serviceSufix => {
-				if( serviceSufix ){
-				serviceName += serviceSufix;
+				if (serviceSufix) {
+					serviceName += serviceSufix;
 				}
 			});
-		
+
 		};
-		
+
 		const completeServiceName = serviceName;
 
-		const serviceVersion = await promptUserForInput(/^[0-9]+\.[0-9]+$/, "Versione del servizio: in formato X.Y", "1.0");
+		if (!serviceVersion) {
+			serviceVersion = await promptUserForInput(/^[0-9]+\.[0-9]+$/, "Versione del servizio: in formato X.Y", "1.0");
+		}
 		if (!serviceVersion) { return; }
 
 
 		const serviceTypes = ['Swagger', 'Wsdl'];
 		await vscode.window.showQuickPick(serviceTypes, { placeHolder: 'Tipo del Servizio:' }).then(serviceType => {
-			if (serviceType) {
+			if (serviceType && yearAndMonth && changeRequest && serviceVersion) {
 				createFolderStructure(folder.fsPath, yearAndMonth, changeRequest, completeServiceName, serviceVersion, serviceType);
 			}
 		});
