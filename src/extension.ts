@@ -16,6 +16,7 @@ function createFolderStructure(folderPath: string, yearAndMonth:string, changeRe
 		`${folderPath}/${yearAndMonth}_${changeRequest}/${serviceName}/v${version}/AnalisiFunzionale`,
 		`${folderPath}/${yearAndMonth}_${changeRequest}/${serviceName}/v${version}/AnalisiFunzionale/Precedenti`,
 		`${folderPath}/${yearAndMonth}_${changeRequest}/${serviceName}/v${version}/DatiPerTest`,
+		`${folderPath}/${yearAndMonth}_${changeRequest}/${serviceName}/v${version}/MaterialeBanca`,
 		`${folderPath}/${yearAndMonth}_${changeRequest}/${serviceName}/v${version}/RichiestaDiEsposizione`,
 		`${folderPath}/${yearAndMonth}_${changeRequest}/${serviceName}/v${version}/RichiestaDiEsposizione/Precedenti`,
 		`${folderPath}/${yearAndMonth}_${changeRequest}/${serviceName}/v${version}/${serviceType}`,
