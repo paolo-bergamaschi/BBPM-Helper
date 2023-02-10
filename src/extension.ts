@@ -2,37 +2,21 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 
 
-function createFolderStructure(folderPath: string, yearAndMonth: string, changeRequest: string, serviceName: string, version: string, serviceType: string): void {
 
-	const foldersToCheck = [
-		`${folderPath}/appunti`,
-		`${folderPath}/DocumentoArchitetturale`,
-		`${folderPath}/DocumentoArchitetturale/Precedenti`,
-		`${folderPath}/MaterialeBancaComune`,
-		`${folderPath}/${yearAndMonth}_${changeRequest}`,
-		`${folderPath}/${yearAndMonth}_${changeRequest}/Stime`,
-		`${folderPath}/${yearAndMonth}_${changeRequest}/${serviceName}`,
-		`${folderPath}/${yearAndMonth}_${changeRequest}/${serviceName}/v${version}`,
-		`${folderPath}/${yearAndMonth}_${changeRequest}/${serviceName}/v${version}/AnalisiFunzionale`,
-		`${folderPath}/${yearAndMonth}_${changeRequest}/${serviceName}/v${version}/AnalisiFunzionale/Precedenti`,
-		`${folderPath}/${yearAndMonth}_${changeRequest}/${serviceName}/v${version}/DatiPerTest`,
-		`${folderPath}/${yearAndMonth}_${changeRequest}/${serviceName}/v${version}/MaterialeBanca`,
-		`${folderPath}/${yearAndMonth}_${changeRequest}/${serviceName}/v${version}/RichiestaDiEsposizione`,
-		`${folderPath}/${yearAndMonth}_${changeRequest}/${serviceName}/v${version}/RichiestaDiEsposizione/Precedenti`,
-		`${folderPath}/${yearAndMonth}_${changeRequest}/${serviceName}/v${version}/${serviceType}`,
-	];
+
+async function createFolderStructure(folderPath: string, callback?: () => void): Promise<boolean> {
+
 
 	try {
-		foldersToCheck.forEach(async folder => {
-			if (!await checkIfFolderExists(folder)) {
-				fs.mkdirSync(folder);
-			}
-
-		});
+		if (!await checkIfFolderExists(folderPath)) {
+			fs.mkdirSync(folderPath);
+		}
 	} catch (err) {
 		console.error(err);
 		vscode.window.showErrorMessage('Errore durante la creazione della sottostruttura di cartelle');
 	}
+	if (callback) { callback(); }
+	return true;
 }
 
 async function checkIfFolderExists(folderPath: string): Promise<boolean> {
@@ -76,15 +60,18 @@ export function activate(context: vscode.ExtensionContext) {
 			return vscode.window.showInformationMessage('Seleziona una cartella prima di usare questo comando');
 		}
 
-		const regex4Groups = /^(.+\\(?:(?<year_and_month>20[0-9]{2}_[01][0-9])_(?<change_request>[^\\]+))?(?:\\(?<service_name>[A-Z0-9]{5}_[A-Za-z0-9]+))?(?:\\(?<service_version>v[0-9]+\.[0-9]+))?)$/;
+		const regex4Groups = /^(.+\\(?:(?<year_and_month>20[0-9]{2}_[01][0-9])_(?<change_request>[^\\]+))?(?:\\(?<service_name>[A-Z0-9]{5}_[A-Za-z0-9]+))?(?:\\v(?<service_version>[0-9]+\.[0-9]+))?)$/;
 		let match: RegExpExecArray | null;
 
 		let yearAndMonth: string | undefined;
 		let changeRequest: string | undefined;
 		let serviceName: string | undefined;
 		let serviceVersion: string | undefined;
+		let path: string;
 
-		match = regex4Groups.exec(folder.fsPath);
+		path = folder.fsPath;
+
+		match = regex4Groups.exec(path);
 		if (match !== null) {
 			console.log(`Match found year_and_month: ${match.groups!.year_and_month}`);
 			console.log(`Match found change_request: ${match.groups!.change_request}`);
@@ -107,12 +94,17 @@ export function activate(context: vscode.ExtensionContext) {
 
 		if (!changeRequest) {
 			changeRequest = await promptUserForInput(/^[0-9A-Za-z_]+$/, "Nome CR (default: PrimaEsposizione", "PrimaEsposizione");
+		} else {
+			path = path.replace(`\\${yearAndMonth}_${changeRequest}`, ``);
 		}
 		if (!changeRequest) { return; }
 
 		if (!serviceName) {
 			serviceName = await promptUserForInput(/^[A-Z0-9]{5}_[A-Z][A-Za-z0-9]+$/, "Nome del servizio: in formato XXXXX_NomeServizio(API|Service)");
+		} else {
+			path = path.replace(`\\${serviceName}`, ``);
 		}
+
 		if (!serviceName) { return; }
 
 		if (!/^[A-Z0-9]{5}_[A-Z][A-Za-z0-9]+(API|Service)$/.test(serviceName)) {
@@ -129,18 +121,92 @@ export function activate(context: vscode.ExtensionContext) {
 
 		if (!serviceVersion) {
 			serviceVersion = await promptUserForInput(/^[0-9]+\.[0-9]+$/, "Versione del servizio: in formato X.Y", "1.0");
+		} else {
+			path = path.replace(`\\v${serviceVersion}`, ``);
 		}
+
 		if (!serviceVersion) { return; }
 
 
 		const serviceTypes = ['Swagger', 'Wsdl'];
-		await vscode.window.showQuickPick(serviceTypes, { placeHolder: 'Tipo del Servizio:' }).then(serviceType => {
-			if (serviceType && yearAndMonth && changeRequest && serviceVersion) {
-				createFolderStructure(folder.fsPath, yearAndMonth, changeRequest, completeServiceName, serviceVersion, serviceType);
-			}
+		let serviceType: string | undefined;
+
+		await vscode.window.showQuickPick(serviceTypes, { placeHolder: 'Tipo del Servizio:' }).then(type => {
+			serviceType = type;
 		});
-		// Crea la sottostruttura di cartelle rispetto alla cartella selezionata
+
+		const foldersToCheck = [
+			`${path}\\appunti`,
+			`${path}\\DocumentoArchitetturale`,
+			`${path}\\DocumentoArchitetturale/Precedenti`,
+			`${path}\\MaterialeBancaComune`,
+			`${path}\\${yearAndMonth}_${changeRequest}`,
+			`${path}\\${yearAndMonth}_${changeRequest}\\Stime`,
+			`${path}\\${yearAndMonth}_${changeRequest}\\${serviceName}`,
+			`${path}\\${yearAndMonth}_${changeRequest}\\${serviceName}\\v${serviceVersion}`,
+			`${path}\\${yearAndMonth}_${changeRequest}\\${serviceName}\\v${serviceVersion}\\AnalisiFunzionale`,
+			`${path}\\${yearAndMonth}_${changeRequest}\\${serviceName}\\v${serviceVersion}\\AnalisiFunzionale\\Precedenti`,
+			`${path}\\${yearAndMonth}_${changeRequest}\\${serviceName}\\v${serviceVersion}\\DatiPerTest`,
+			`${path}\\${yearAndMonth}_${changeRequest}\\${serviceName}\\v${serviceVersion}\\MaterialeBanca`,
+			`${path}\\${yearAndMonth}_${changeRequest}\\${serviceName}\\v${serviceVersion}\\RichiestaDiEsposizione`,
+			`${path}\\${yearAndMonth}_${changeRequest}\\${serviceName}\\v${serviceVersion}\\RichiestaDiEsposizione\\Precedenti`,
+			`${path}\\${yearAndMonth}_${changeRequest}\\${serviceName}\\v${serviceVersion}\\${serviceType}`,
+		];
+
+
+		try {
+			foldersToCheck.forEach(async folder => {
+				await createFolderStructure(folder);
+			});
+		} catch (err) {
+			console.error(err);
+			vscode.window.showErrorMessage('Errore durante la creazione della sottostruttura di cartelle');
+			return false;
+		}
+
+		try {
+			await createFolderStructure(`${path}\\${yearAndMonth}_${changeRequest}`, () => {
+				const { readmeTemplate } = require("./resources/file_definitions");
+				const fileContent = readmeTemplate(changeRequest);
+
+				const readmePath = `${path}\\${yearAndMonth}_${changeRequest}\\readme.md`;
+
+				fs.writeFileSync(readmePath, fileContent);
+			});
+		} catch (err) {
+			console.error(err);
+			vscode.window.showErrorMessage('Errore durante la creazione della sottostruttura di cartelle');
+			return false;
+		}
+
+		try {
+			await createFolderStructure(`${path}\\${yearAndMonth}_${changeRequest}\\${serviceName}\\v${serviceVersion}\\${serviceType}`, () => {
+				let pomContent: string;
+
+				if (serviceType === "Swagger") {
+					const { swaggerPomTemplate } = require("./resources/file_definitions");
+					pomContent = swaggerPomTemplate(completeServiceName, serviceVersion);
+				}else {
+					const { wsdlPomTemplate } = require("./resources/file_definitions");
+					pomContent = wsdlPomTemplate(completeServiceName, serviceVersion);
+				}
+
+				const pomPath = `${path}\\${yearAndMonth}_${changeRequest}\\${serviceName}\\v${serviceVersion}\\${serviceType}\\pom.xml`;
+
+
+				fs.writeFileSync(pomPath, pomContent);
+
+			});
+		} catch (err) {
+			console.error(err);
+			vscode.window.showErrorMessage('Errore durante la creazione della sottostruttura di cartelle');
+			return false;
+		}
+
+
 	});
+
+
 
 	context.subscriptions.push(disposable);
 }

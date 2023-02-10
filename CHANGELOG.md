@@ -9,6 +9,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ### Added
 
 - Migliorata gestione del menu contestuale, ora le cartelle vengono proposte a seconda di quale elemento si clicca
+- Gestione Creazione file readme.md e pom.xml
 - Aggiunta generazione cartella "MaterialeBanca"
 
 ## [0.0.2] - 2023-02-08
