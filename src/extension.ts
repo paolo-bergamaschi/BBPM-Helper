@@ -13,7 +13,7 @@ async function createFolderStructure(folderPath: string, callback?: () => void):
 		}
 	} catch (err) {
 		console.error(err);
-		vscode.window.showErrorMessage('Errore durante la creazione della sottostruttura di cartelle');
+		vscode.window.showErrorMessage('createFolderStructure::Errore durante la creazione della sottostruttura di cartelle');
 	}
 	if (callback) { callback(); }
 	return true;
@@ -160,7 +160,7 @@ export function activate(context: vscode.ExtensionContext) {
 			});
 		} catch (err) {
 			console.error(err);
-			vscode.window.showErrorMessage('Errore durante la creazione della sottostruttura di cartelle');
+			vscode.window.showErrorMessage('activate::Errore durante la creazione della sottostruttura di cartelle');
 			return false;
 		}
 
@@ -175,7 +175,7 @@ export function activate(context: vscode.ExtensionContext) {
 			});
 		} catch (err) {
 			console.error(err);
-			vscode.window.showErrorMessage('Errore durante la creazione della sottostruttura di cartelle');
+			vscode.window.showErrorMessage('activate::Errore durante la creazione dei file');
 			return false;
 		}
 
