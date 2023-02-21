@@ -1,8 +1,9 @@
 # Change Log
 
-All notable changes to the "bbpm-helper" extension will be documented in this file.
+## [0.0.3] - 2023-02-21
+### Changed
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+- aggiornata versione del validatore swagger nel template
 
 ## [0.0.3] - 2023-02-09
 

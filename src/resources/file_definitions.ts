@@ -33,7 +33,7 @@ export const swaggerPomTemplate = (file: string, version: string) =>
                     <plugin>
                         <groupId>it.imolainformatica.plugins</groupId>
                         <artifactId>rest-openapi-validator-maven-plugin</artifactId>
-                        <version>1.1.14</version>
+                        <version>1.2.2</version>
                         <configuration>
                             <inputContractBasePath>\${basedir}</inputContractBasePath>
                         </configuration>
