@@ -100,7 +100,7 @@ export function activate(context: vscode.ExtensionContext) {
 		if (!changeRequest) { return; }
 
 		if (!serviceName) {
-			serviceName = await promptUserForInput(/^[A-Z0-9]{5}_[A-Z][A-Za-z0-9]+$/, "Nome del servizio: in formato XXXXX_NomeServizio(API|Service)");
+			serviceName = await promptUserForInput(/^([A-Z0-9]{5}|EXT[A-Z0-9]{1,})_[A-Z][A-Za-z0-9]+$/, "Nome del servizio: in formato XXXXX_NomeServizio(API|Service)");
 		} else {
 			path = path.replace(`\\${serviceName}`, ``);
 		}
@@ -166,10 +166,15 @@ export function activate(context: vscode.ExtensionContext) {
 
 		try {
 			await createFolderStructure(`${path}\\${yearAndMonth}_${changeRequest}`, () => {
+				const readmePath = `${path}\\${yearAndMonth}_${changeRequest}\\readme.md`;
+				
+				if (fs.existsSync (readmePath)) {
+					return;
+				}
+
 				const { readmeTemplate } = require("./resources/file_definitions");
 				const fileContent = readmeTemplate(changeRequest);
 
-				const readmePath = `${path}\\${yearAndMonth}_${changeRequest}\\readme.md`;
 
 				fs.writeFileSync(readmePath, fileContent);
 			});

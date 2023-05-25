@@ -1,6 +1,12 @@
 # Change Log
 
-## [0.0.3] - 2023-02-21
+## [0.0.5] - 2023-02-21
+### Changed
+
+- Il file readme.md non viene più sovrascritto ad ogni generazione, se già presente
+- Aggiunta eccezione per gestione delle sigle applicative con prefissi `EXT` che ammettono più di 5 caratteri  
+  
+## [0.0.4] - 2023-02-21
 ### Changed
 
 - aggiornata versione del validatore swagger nel template
