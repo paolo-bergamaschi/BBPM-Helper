@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.0.6] - 2023-08-03
+### Changed
+
+- Splittata generazione in due parti
+- Riorganizzata struttura cartella
+
 ## [0.0.5] - 2023-02-21
 ### Changed
 

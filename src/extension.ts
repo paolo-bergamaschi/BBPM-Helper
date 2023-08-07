@@ -54,19 +54,17 @@ async function promptUserForInput(regex: RegExp, text: string, defaultValue?: st
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 
-	const disposable = vscode.commands.registerCommand('bbpm-helper.scaffolding', async (folder) => {
+	const disposable = vscode.commands.registerCommand('bbpm-helper.scaffoldingCR', async (folder) => {
 
 		if (!folder) {
 			return vscode.window.showInformationMessage('Seleziona una cartella prima di usare questo comando');
 		}
 
-		const regex4Groups = /^(.+\\(?:(?<year_and_month>20[0-9]{2}_[01][0-9])_(?<change_request>[^\\]+))?(?:\\(?<service_name>[A-Z0-9]{5}_[A-Za-z0-9]+))?(?:\\v(?<service_version>[0-9]+\.[0-9]+))?)$/;
+		const regex4Groups = /^(.+\\(?:(?<year_and_month>20[0-9]{2}_[01][0-9])_(?<change_request>[^\\]+))?)$/;
 		let match: RegExpExecArray | null;
 
 		let yearAndMonth: string | undefined;
 		let changeRequest: string | undefined;
-		let serviceName: string | undefined;
-		let serviceVersion: string | undefined;
 		let path: string;
 
 		path = folder.fsPath;
@@ -75,12 +73,8 @@ export function activate(context: vscode.ExtensionContext) {
 		if (match !== null) {
 			console.log(`Match found year_and_month: ${match.groups!.year_and_month}`);
 			console.log(`Match found change_request: ${match.groups!.change_request}`);
-			console.log(`Match found service_name: ${match.groups!.service_name}`);
-			console.log(`Match found service_version: ${match.groups!.service_version}`);
 			yearAndMonth = match.groups!.year_and_month;
 			changeRequest = match.groups!.change_request;
-			serviceName = match.groups!.service_name;
-			serviceVersion = match.groups!.service_version;
 		}
 
 		const date = new Date();
@@ -99,58 +93,12 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 		if (!changeRequest) { return; }
 
-		if (!serviceName) {
-			serviceName = await promptUserForInput(/^([A-Z0-9]{5}|EXT[A-Z0-9]{1,})_[A-Z][A-Za-z0-9]+$/, "Nome del servizio: in formato XXXXX_NomeServizio(API|Service)");
-		} else {
-			path = path.replace(`\\${serviceName}`, ``);
-		}
-
-		if (!serviceName) { return; }
-
-		if (!/^[A-Z0-9]{5}_[A-Z][A-Za-z0-9]+(API|Service)$/.test(serviceName)) {
-			const serviceSubfixes = ['Service', 'API'];
-			await vscode.window.showQuickPick(serviceSubfixes, { placeHolder: 'Tipo del Servizio:' }).then(serviceSufix => {
-				if (serviceSufix) {
-					serviceName += serviceSufix;
-				}
-			});
-
-		};
-
-		const completeServiceName = serviceName;
-
-		if (!serviceVersion) {
-			serviceVersion = await promptUserForInput(/^[0-9]+\.[0-9]+$/, "Versione del servizio: in formato X.Y", "1.0");
-		} else {
-			path = path.replace(`\\v${serviceVersion}`, ``);
-		}
-
-		if (!serviceVersion) { return; }
-
-
-		const serviceTypes = ['Swagger', 'Wsdl'];
-		let serviceType: string | undefined;
-
-		await vscode.window.showQuickPick(serviceTypes, { placeHolder: 'Tipo del Servizio:' }).then(type => {
-			serviceType = type;
-		});
 
 		const foldersToCheck = [
-			`${path}\\appunti`,
 			`${path}\\DocumentoArchitetturale`,
 			`${path}\\DocumentoArchitetturale/Precedenti`,
-			`${path}\\MaterialeBancaComune`,
 			`${path}\\${yearAndMonth}_${changeRequest}`,
 			`${path}\\${yearAndMonth}_${changeRequest}\\Stime`,
-			`${path}\\${yearAndMonth}_${changeRequest}\\${serviceName}`,
-			`${path}\\${yearAndMonth}_${changeRequest}\\${serviceName}\\v${serviceVersion}`,
-			`${path}\\${yearAndMonth}_${changeRequest}\\${serviceName}\\v${serviceVersion}\\AnalisiFunzionale`,
-			`${path}\\${yearAndMonth}_${changeRequest}\\${serviceName}\\v${serviceVersion}\\AnalisiFunzionale\\Precedenti`,
-			`${path}\\${yearAndMonth}_${changeRequest}\\${serviceName}\\v${serviceVersion}\\DatiPerTest`,
-			`${path}\\${yearAndMonth}_${changeRequest}\\${serviceName}\\v${serviceVersion}\\MaterialeBanca`,
-			`${path}\\${yearAndMonth}_${changeRequest}\\${serviceName}\\v${serviceVersion}\\RichiestaDiEsposizione`,
-			`${path}\\${yearAndMonth}_${changeRequest}\\${serviceName}\\v${serviceVersion}\\RichiestaDiEsposizione\\Precedenti`,
-			`${path}\\${yearAndMonth}_${changeRequest}\\${serviceName}\\v${serviceVersion}\\${serviceType}`,
 		];
 
 
@@ -175,7 +123,6 @@ export function activate(context: vscode.ExtensionContext) {
 				const { readmeTemplate } = require("./resources/file_definitions");
 				const fileContent = readmeTemplate(changeRequest);
 
-
 				fs.writeFileSync(readmePath, fileContent);
 			});
 		} catch (err) {
@@ -184,8 +131,96 @@ export function activate(context: vscode.ExtensionContext) {
 			return false;
 		}
 
+
+	});
+
+	const disposable2 = vscode.commands.registerCommand('bbpm-helper.scaffoldingServizio', async (folder) => {
+
+		if (!folder) {
+			return vscode.window.showInformationMessage('Seleziona una cartella prima di usare questo comando');
+		}
+
+		const regex4Groups = /^(.+\\(?:\\(?<service_name>[A-Z0-9]{5}_[A-Za-z0-9]+))?(?:\\v(?<service_version>[0-9]+\.[0-9]+))?)$/;
+		let match: RegExpExecArray | null;
+
+		let serviceName: string | undefined;
+		let serviceVersion: string | undefined;
+		let path: string;
+
+		path = folder.fsPath;
+
+		match = regex4Groups.exec(path);
+		if (match !== null) {
+			console.log(`Match found service_name: ${match.groups!.service_name}`);
+			console.log(`Match found service_version: ${match.groups!.service_version}`);
+			serviceName = match.groups!.service_name;
+			serviceVersion = match.groups!.service_version;
+		}
+
+		if (!serviceName) {
+			serviceName = await promptUserForInput(/^([A-Z0-9]{5}|EXT[A-Z0-9]{1,})_[A-Z][A-Za-z0-9]+$/, "Nome del servizio: in formato XXXXX_NomeServizio(API|Service)");
+		} else {
+			path = path.replace(`\\${serviceName}`, ``);
+		}
+
+		if (!serviceName) { return; }
+
+		if (!/^([A-Z0-9]{5}|EXT[A-Z0-9]{1,})_[A-Z][A-Za-z0-9]+(API|Service)$/.test(serviceName)) {
+			const serviceSubfixes = ['Service', 'API'];
+			await vscode.window.showQuickPick(serviceSubfixes, { placeHolder: 'Tipo del Servizio:' }).then(serviceSufix => {
+				if (serviceSufix) {
+					serviceName += serviceSufix;
+				}
+			});
+
+		};
+
+		const completeServiceName = serviceName;
+
+		if (!serviceVersion) {
+			serviceVersion = await promptUserForInput(/^[0-9]+\.[0-9]+$/, "Versione del servizio: in formato X.Y", "1\\.0");
+		} else {
+			path = path.replace(`\\v${serviceVersion}`, ``);
+		}
+
+		if (!serviceVersion) { return; }
+
+
+		const serviceTypes = ['Swagger', 'Wsdl'];
+		let serviceType: string | undefined;
+
+		await vscode.window.showQuickPick(serviceTypes, { placeHolder: 'Tipo del Servizio:' }).then(type => {
+			serviceType = type;
+		});
+
+		const foldersToCheck = [
+			`${path}\\DocumentoArchitetturale`,
+			`${path}\\DocumentoArchitetturale/Precedenti`,
+			`${path}\\${serviceName}`,
+			`${path}\\${serviceName}\\v${serviceVersion}`,
+			`${path}\\${serviceName}\\v${serviceVersion}\\AnalisiFunzionale`,
+			`${path}\\${serviceName}\\v${serviceVersion}\\AnalisiFunzionale\\Precedenti`,
+			`${path}\\${serviceName}\\v${serviceVersion}\\DatiPerTest`,
+			`${path}\\${serviceName}\\v${serviceVersion}\\MaterialeBanca`,
+			`${path}\\${serviceName}\\v${serviceVersion}\\RichiestaDiEsposizione`,
+			`${path}\\${serviceName}\\v${serviceVersion}\\RichiestaDiEsposizione\\Precedenti`,
+			`${path}\\${serviceName}\\v${serviceVersion}\\${serviceType}`,
+		];
+
+
 		try {
-			await createFolderStructure(`${path}\\${yearAndMonth}_${changeRequest}\\${serviceName}\\v${serviceVersion}\\${serviceType}`, () => {
+			foldersToCheck.forEach(async folder => {
+				await createFolderStructure(folder);
+			});
+		} catch (err) {
+			console.error(err);
+			vscode.window.showErrorMessage('activate::Errore durante la creazione della sottostruttura di cartelle');
+			return false;
+		}
+
+
+		try {
+			await createFolderStructure(`${path}\\${serviceName}\\v${serviceVersion}\\${serviceType}`, () => {
 				let pomContent: string;
 
 				if (serviceType === "Swagger") {
@@ -196,7 +231,7 @@ export function activate(context: vscode.ExtensionContext) {
 					pomContent = wsdlPomTemplate(completeServiceName, serviceVersion);
 				}
 
-				const pomPath = `${path}\\${yearAndMonth}_${changeRequest}\\${serviceName}\\v${serviceVersion}\\${serviceType}\\pom.xml`;
+				const pomPath = `${path}\\${serviceName}\\v${serviceVersion}\\${serviceType}\\pom.xml`;
 
 
 				fs.writeFileSync(pomPath, pomContent);
@@ -212,8 +247,8 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 
-
 	context.subscriptions.push(disposable);
+	context.subscriptions.push(disposable2);
 }
 
 // This method is called when your extension is deactivated

@@ -2,7 +2,7 @@
   "name": "bbpm-helper",
   "displayName": "BBPM-HELPER",
   "description": "This Extension help managing support and api-developent projects for BBPM",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "engines": {
     "vscode": "^1.74.0"
   },
@@ -13,14 +13,22 @@
   "contributes": {
     "commands": [
       {
-        "command": "bbpm-helper.scaffolding",
-        "title": "scaffolding delle cartelle"
+        "command": "bbpm-helper.scaffoldingCR",
+        "title": "Crea Nuova CR"
+      },
+      {
+        "command": "bbpm-helper.scaffoldingServizio",
+        "title": "Crea Nuovo Servizio"
       }
     ],
     "menus": {
       "explorer/context": [
         {
-          "command": "bbpm-helper.scaffolding",
+          "command": "bbpm-helper.scaffoldingCR",
+          "when": "explorerResourceIsFolder"
+        },
+        {
+          "command": "bbpm-helper.scaffoldingServizio",
           "when": "explorerResourceIsFolder"
         }
       ]
