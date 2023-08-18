@@ -4,7 +4,7 @@ import * as fs from 'fs';
 
 
 
-async function createFolderStructure(folderPath: string, callback?: () => void): Promise<boolean> {
+export async function createFolderStructure(folderPath: string, callback?: () => void): Promise<boolean> {
 
 
 	try {
@@ -14,12 +14,13 @@ async function createFolderStructure(folderPath: string, callback?: () => void):
 	} catch (err) {
 		console.error(err);
 		vscode.window.showErrorMessage('createFolderStructure::Errore durante la creazione della sottostruttura di cartelle');
+		return false;
 	}
 	if (callback) { callback(); }
 	return true;
 }
 
-async function checkIfFolderExists(folderPath: string): Promise<boolean> {
+export async function checkIfFolderExists(folderPath: string): Promise<boolean> {
 	try {
 		const stat = await vscode.workspace.fs.stat(vscode.Uri.file(folderPath));
 		return stat.type === vscode.FileType.Directory;
