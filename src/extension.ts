@@ -1,22 +1,23 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
+import * as fsp from 'fs/promises'; // Importa fs.promises per le versioni asincrone
+import * as path from 'path';
 
 
 
-
-export async function createFolderStructure(folderPath: string, callback?: () => void): Promise<boolean> {
+export async function createFolderStructure(folderPath: string): Promise<boolean> {
 
 
 	try {
 		if (!await checkIfFolderExists(folderPath)) {
-			fs.mkdirSync(folderPath);
+			vscode.workspace.fs.createDirectory(vscode.Uri.file(folderPath));
 		}
 	} catch (err) {
 		console.error(err);
 		vscode.window.showErrorMessage('createFolderStructure::Errore durante la creazione della sottostruttura di cartelle');
 		return false;
 	}
-	if (callback) { callback(); }
+
 	return true;
 }
 
@@ -28,6 +29,19 @@ export async function checkIfFolderExists(folderPath: string): Promise<boolean> 
 		return false;
 	}
 }
+
+async function waitForFolderToExist(folderPath: string, maxAttempts: number = 10, delayMs: number = 100): Promise<void> {
+    let attempts = 0;
+    while (attempts < maxAttempts) {
+        if (await checkIfFolderExists(folderPath)) {
+            return;
+        }
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+        attempts++;
+    }
+    throw new Error(`La cartella ${folderPath} non esiste dopo ${maxAttempts} tentativi.`);
+}
+
 async function promptUserForInput(regex: RegExp, text: string, defaultValue?: string): Promise<string | undefined> {
 	let input: string | undefined;
 	let resultOK: boolean;
@@ -66,11 +80,11 @@ export function activate(context: vscode.ExtensionContext) {
 
 		let yearAndMonth: string | undefined;
 		let changeRequest: string | undefined;
-		let path: string;
+		let finalpath: string;
 
-		path = folder.fsPath;
+		finalpath = folder.fsPath;
 
-		match = regex4Groups.exec(path);
+		match = regex4Groups.exec(finalpath);
 		if (match !== null) {
 			console.log(`Match found year_and_month: ${match.groups!.year_and_month}`);
 			console.log(`Match found change_request: ${match.groups!.change_request}`);
@@ -90,16 +104,16 @@ export function activate(context: vscode.ExtensionContext) {
 		if (!changeRequest) {
 			changeRequest = await promptUserForInput(/^[0-9A-Za-z_]+$/, "Nome CR (default: PrimaEsposizione", "PrimaEsposizione");
 		} else {
-			path = path.replace(`\\${yearAndMonth}_${changeRequest}`, ``);
+			finalpath = finalpath.replace(`\\${yearAndMonth}_${changeRequest}`, ``);
 		}
 		if (!changeRequest) { return; }
 
 
 		const foldersToCheck = [
-			`${path}\\DocumentoArchitetturale`,
-			`${path}\\DocumentoArchitetturale/Precedenti`,
-			`${path}\\${yearAndMonth}_${changeRequest}`,
-			`${path}\\${yearAndMonth}_${changeRequest}\\Stime`,
+			`${finalpath}\\DocumentoArchitetturale`,
+			`${finalpath}\\DocumentoArchitetturale/Precedenti`,
+			`${finalpath}\\${yearAndMonth}_${changeRequest}`,
+			`${finalpath}\\${yearAndMonth}_${changeRequest}\\Stime`,
 		];
 
 
@@ -114,26 +128,40 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 
 		try {
-			await createFolderStructure(`${path}\\${yearAndMonth}_${changeRequest}`, () => {
-				const readmePath = `${path}\\${yearAndMonth}_${changeRequest}\\readme.md`;
-				
-				if (fs.existsSync (readmePath)) {
-					return;
-				}
+			const folderPath = path.join(finalpath, `${yearAndMonth}_${changeRequest}`);
+			
+			// Crea la cartella in modo asincrono se non esiste
+			
+			await createFolderStructure(folderPath);	
+		   	// Aspetta che la cartella esista prima di procedere
+   			await waitForFolderToExist(folderPath);
 
-				const { readmeTemplate } = require("./resources/file_definitions");
-				const fileContent = readmeTemplate(changeRequest);
-
-				fs.writeFileSync(readmePath, fileContent);
-			});
+			const readmePath = path.join(folderPath, 'readme.md');
+		
+			try {
+				// Usa fs.promises.access per controllare l'esistenza del file in modo asincrono
+				await fs.promises.access(readmePath);
+		
+				// Il file esiste, non fare nulla
+				return;
+			} catch (err) {
+				// fs.promises.access genera un'eccezione se il file non esiste, che è il comportamento desiderato
+			}
+		
+			// Importa il modulo in modo asincrono
+			const { readmeTemplate } = await import("./resources/file_definitions");
+			const fileContent = readmeTemplate(changeRequest);
+		
+			// Usa fs.promises.writeFile per scrivere il file in modo asincrono
+			await fs.promises.writeFile(readmePath, fileContent, { flag: 'w' });
 		} catch (err) {
 			console.error(err);
 			vscode.window.showErrorMessage('activate::Errore durante la creazione dei file');
 			return false;
 		}
-
-
 	});
+
+	
 
 	const disposable2 = vscode.commands.registerCommand('bbpm-helper.scaffoldingServizio', async (folder) => {
 
@@ -146,11 +174,11 @@ export function activate(context: vscode.ExtensionContext) {
 
 		let serviceName: string | undefined;
 		let serviceVersion: string | undefined;
-		let path: string;
+		let finalpath: string;
 
-		path = folder.fsPath;
+		finalpath = folder.fsPath;
 
-		match = regex4Groups.exec(path);
+		match = regex4Groups.exec(finalpath);
 		if (match !== null) {
 			console.log(`Match found service_name: ${match.groups!.service_name}`);
 			console.log(`Match found service_version: ${match.groups!.service_version}`);
@@ -161,7 +189,7 @@ export function activate(context: vscode.ExtensionContext) {
 		if (!serviceName) {
 			serviceName = await promptUserForInput(/^([A-Z0-9]{5}|EXT[A-Z0-9]{1,})_[A-Z][A-Za-z0-9]+$/, "Nome del servizio: in formato XXXXX_NomeServizio(API|Service)");
 		} else {
-			path = path.replace(`\\${serviceName}`, ``);
+			finalpath = finalpath.replace(`\\${serviceName}`, ``);
 		}
 
 		if (!serviceName) { return; }
@@ -181,7 +209,7 @@ export function activate(context: vscode.ExtensionContext) {
 		if (!serviceVersion) {
 			serviceVersion = await promptUserForInput(/^[0-9]+\.[0-9]+$/, "Versione del servizio: in formato X.Y", "1\\.0");
 		} else {
-			path = path.replace(`\\v${serviceVersion}`, ``);
+			finalpath = finalpath.replace(`\\v${serviceVersion}`, ``);
 		}
 
 		if (!serviceVersion) { return; }
@@ -195,17 +223,17 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 
 		const foldersToCheck = [
-			`${path}\\DocumentoArchitetturale`,
-			`${path}\\DocumentoArchitetturale/Precedenti`,
-			`${path}\\${serviceName}`,
-			`${path}\\${serviceName}\\v${serviceVersion}`,
-			`${path}\\${serviceName}\\v${serviceVersion}\\AnalisiFunzionale`,
-			`${path}\\${serviceName}\\v${serviceVersion}\\AnalisiFunzionale\\Precedenti`,
-			`${path}\\${serviceName}\\v${serviceVersion}\\DatiPerTest`,
-			`${path}\\${serviceName}\\v${serviceVersion}\\MaterialeBanca`,
-			`${path}\\${serviceName}\\v${serviceVersion}\\RichiestaDiEsposizione`,
-			`${path}\\${serviceName}\\v${serviceVersion}\\RichiestaDiEsposizione\\Precedenti`,
-			`${path}\\${serviceName}\\v${serviceVersion}\\${serviceType}`,
+			`${finalpath}\\DocumentoArchitetturale`,
+			`${finalpath}\\DocumentoArchitetturale/Precedenti`,
+			`${finalpath}\\${serviceName}`,
+			`${finalpath}\\${serviceName}\\v${serviceVersion}`,
+			`${finalpath}\\${serviceName}\\v${serviceVersion}\\AnalisiFunzionale`,
+			`${finalpath}\\${serviceName}\\v${serviceVersion}\\AnalisiFunzionale\\Precedenti`,
+			`${finalpath}\\${serviceName}\\v${serviceVersion}\\DatiPerTest`,
+			`${finalpath}\\${serviceName}\\v${serviceVersion}\\MaterialeBanca`,
+			`${finalpath}\\${serviceName}\\v${serviceVersion}\\RichiestaDiEsposizione`,
+			`${finalpath}\\${serviceName}\\v${serviceVersion}\\RichiestaDiEsposizione\\Precedenti`,
+			`${finalpath}\\${serviceName}\\v${serviceVersion}\\${serviceType}`,
 		];
 
 
@@ -221,23 +249,28 @@ export function activate(context: vscode.ExtensionContext) {
 
 
 		try {
-			await createFolderStructure(`${path}\\${serviceName}\\v${serviceVersion}\\${serviceType}`, () => {
-				let pomContent: string;
+			let pppath = `${finalpath}\\${serviceName}\\v${serviceVersion}\\${serviceType}`;
+			await createFolderStructure(pppath);
 
-				if (serviceType === "Swagger") {
-					const { swaggerPomTemplate } = require("./resources/file_definitions");
-					pomContent = swaggerPomTemplate(completeServiceName, serviceVersion);
-				}else {
-					const { wsdlPomTemplate } = require("./resources/file_definitions");
-					pomContent = wsdlPomTemplate(completeServiceName, serviceVersion);
-				}
+			await waitForFolderToExist(pppath);
 
-				const pomPath = `${path}\\${serviceName}\\v${serviceVersion}\\${serviceType}\\pom.xml`;
+			
+			let pomContent: string;
+
+			if (serviceType === "Swagger") {
+				const { swaggerPomTemplate } = require("./resources/file_definitions");
+				pomContent = swaggerPomTemplate(completeServiceName, serviceVersion);
+			}else {
+				const { wsdlPomTemplate } = require("./resources/file_definitions");
+				pomContent = wsdlPomTemplate(completeServiceName, serviceVersion);
+			}
+
+			const pomPath = path.join(pppath, 'pom.xml');
 
 
-				fs.writeFileSync(pomPath, pomContent);
+			await fs.promises.writeFile(pomPath, pomContent, { flag: 'w' });
 
-			});
+
 		} catch (err) {
 			console.error(err);
 			vscode.window.showErrorMessage('Errore durante la creazione della sottostruttura di cartelle');

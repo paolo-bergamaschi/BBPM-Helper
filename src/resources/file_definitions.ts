@@ -1,5 +1,5 @@
 
-export const readmeTemplate = (changeRequest: string) =>
+export const readmeTemplate = (changeRequest: string|undefined) =>
     `${changeRequest}
 ====================
 
