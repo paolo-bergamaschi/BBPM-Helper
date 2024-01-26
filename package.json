@@ -2,7 +2,7 @@
   "name": "bbpm-helper",
   "displayName": "BBPM-HELPER",
   "description": "This Extension help managing support and api-developent projects for BBPM",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "engines": {
     "vscode": "^1.74.0"
   },

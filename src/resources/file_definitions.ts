@@ -5,11 +5,31 @@ export const readmeTemplate = (changeRequest: string|undefined) =>
 
 <descrizione della esposizione o della modifica richiesta>
 
+# Documenti Sharepoint
+- [Analisi][1]
+- [Richiesta Di Esposizione][2]
+- [Stima][3]
+
 # Stakeholders
 
 | nome                      | ruolo              | azienda  |
 | ------------------------- | ------------------ | -------- |
 |                           |                    |          |
+
+[1]: <inserire Link Analisi qui>
+[2]: <inserire Link RdE qui>
+[3]: <inserire Link Stima qui>
+`;
+
+
+export const placeHolderTemplate = () =>
+    `Il file che stai cercando si trova su [sharepoint][def]!
+========================================================
+
+
+cancellare questo file una volta archiviato il file qua
+
+[def]: https://imolinfo.sharepoint.com/:f:/r/sites/BancoBPM/Documenti%20condivisi/Documenti%20temporanei/In%20Corso
 `;
 
 export const swaggerPomTemplate = (file: string, version: string) =>

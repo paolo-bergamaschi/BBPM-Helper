@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.0.7] - 2024-01-23
+### Changed
+
+- Aggiunta gestione Placeholder per file office
+
 ## [0.0.6] - 2023-08-03
 ### Changed
 

@@ -154,6 +154,18 @@ export function activate(context: vscode.ExtensionContext) {
 		
 			// Usa fs.promises.writeFile per scrivere il file in modo asincrono
 			await fs.promises.writeFile(readmePath, fileContent, { flag: 'w' });
+
+			let folderPathStima = path.join(folderPath, "Stime");
+
+			await waitForFolderToExist(folderPathStima);
+
+			const placeholderPathStima = path.join( folderPathStima,`placeholder.md`);
+			// Importa il modulo in modo asincrono
+			const { placeHolderTemplate } = await import("./resources/file_definitions");
+			const placeHolderTemplatefileContent = placeHolderTemplate();
+		
+			// Usa fs.promises.writeFile per scrivere il file in modo asincrono
+			await fs.promises.writeFile(placeholderPathStima, placeHolderTemplatefileContent, { flag: 'w' });
 		} catch (err) {
 			console.error(err);
 			vscode.window.showErrorMessage('activate::Errore durante la creazione dei file');
@@ -270,6 +282,18 @@ export function activate(context: vscode.ExtensionContext) {
 
 			await fs.promises.writeFile(pomPath, pomContent, { flag: 'w' });
 
+
+			const placeholderPathAnalisi = `${finalpath}\\${serviceName}\\v${serviceVersion}\\AnalisiFunzionale\\placeholder.md`;
+			// Importa il modulo in modo asincrono
+			const { placeHolderTemplate } = await import("./resources/file_definitions");
+			const placeHolderTemplatefileContent = placeHolderTemplate();
+			
+			// Usa fs.promises.writeFile per scrivere il file in modo asincrono
+			await fs.promises.writeFile(placeholderPathAnalisi, placeHolderTemplatefileContent, { flag: 'w' });
+			
+			const placeholderPathRdE = `${finalpath}\\${serviceName}\\v${serviceVersion}\\RichiestaDiEsposizione\\placeholder.md`;
+			// Usa fs.promises.writeFile per scrivere il file in modo asincrono
+			await fs.promises.writeFile(placeholderPathRdE, placeHolderTemplatefileContent, { flag: 'w' });
 
 		} catch (err) {
 			console.error(err);
