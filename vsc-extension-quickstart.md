@@ -1,5 +1,13 @@
 # Welcome to your VS Code Extension
 
+## Prerequisites
+- [Git](https://git-scm.com/)
+- [Node Js](https://nodejs.org/)
+  - Yeoman `npm install --global yo generator-code`
+  - vsce (visual studio code extension manager) `npm install -g @vscode/vsce`
+  - TypeScript `npm install -g typescript`
+  - retrieve all other prerequisite with `npm install`
+
 ## What's in the folder
 
 * This folder contains all of the files necessary for your extension.
