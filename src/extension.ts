@@ -181,7 +181,8 @@ export function activate(context: vscode.ExtensionContext) {
 			return vscode.window.showInformationMessage('Seleziona una cartella prima di usare questo comando');
 		}
 
-		const regex4Groups = /^(.+\\(?:\\(?<service_name>[A-Z0-9]{5}_[A-Za-z0-9]+))?(?:\\v(?<service_version>[0-9]+\.[0-9]+))?)$/;
+		//const regex4Groups = /\\(?<service_name>([A-Z0-9]{5}|EXT[A-Z0-9]{1,})_[A-Z][A-Za-z0-9]+)(?:\\v(?<service_version>[0-9]+\.[0-9]+))?)$/;
+		const regex4Groups = /(?<service_name>(?:[A-Z0-9]{5}|EXT[A-Z0-9]{1,})_[A-Z][A-Za-z0-9]+)(?:\\v(?<service_version>[0-9]+\.[0-9]+))?$/;
 		let match: RegExpExecArray | null;
 
 		let serviceName: string | undefined;

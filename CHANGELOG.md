@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.0.8] - 2024-04-02
+### Changed
+
+- Ripristinato comportamento menu contestuale: se clicco su una cartella di un servizio o sulla versione dello stesso, non propone il nome da utilizzare, ma prende invece quello del contesto corrente. 
+
 ## [0.0.7] - 2024-01-23
 ### Changed
 
