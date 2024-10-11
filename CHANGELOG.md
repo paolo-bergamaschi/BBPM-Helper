@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.0.9] - 2024-10-11
+### Changed
+
+- Aggiornata la versione di riferimento del validatore a 1.5.0 
+
 ## [0.0.8] - 2024-04-02
 ### Changed
 
