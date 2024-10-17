@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as fsp from 'fs/promises'; // Importa fs.promises per le versioni asincrone
 import * as path from 'path';
 
-
+const separator = "/"; 
 
 export async function createFolderStructure(folderPath: string): Promise<boolean> {
 
@@ -104,16 +104,16 @@ export function activate(context: vscode.ExtensionContext) {
 		if (!changeRequest) {
 			changeRequest = await promptUserForInput(/^[0-9A-Za-z_]+$/, "Nome CR (default: PrimaEsposizione", "PrimaEsposizione");
 		} else {
-			finalpath = finalpath.replace(`\\${yearAndMonth}_${changeRequest}`, ``);
+			finalpath = finalpath.replace(`${separator}${yearAndMonth}_${changeRequest}`, ``);
 		}
 		if (!changeRequest) { return; }
 
 
 		const foldersToCheck = [
-			`${finalpath}\\DocumentoArchitetturale`,
-			`${finalpath}\\DocumentoArchitetturale/Precedenti`,
-			`${finalpath}\\${yearAndMonth}_${changeRequest}`,
-			`${finalpath}\\${yearAndMonth}_${changeRequest}\\Stime`,
+			`${finalpath}${separator}DocumentoArchitetturale`,
+			`${finalpath}${separator}DocumentoArchitetturale${separator}Precedenti`,
+			`${finalpath}${separator}${yearAndMonth}_${changeRequest}`,
+			`${finalpath}${separator}${yearAndMonth}_${changeRequest}${separator}Stime`,
 		];
 
 
@@ -192,17 +192,18 @@ export function activate(context: vscode.ExtensionContext) {
 		finalpath = folder.fsPath;
 
 		match = regex4Groups.exec(finalpath);
+		let nuovaStringa: string
 		if (match !== null) {
 			console.log(`Match found service_name: ${match.groups!.service_name}`);
 			console.log(`Match found service_version: ${match.groups!.service_version}`);
 			serviceName = match.groups!.service_name;
 			serviceVersion = match.groups!.service_version;
 		}
-
 		if (!serviceName) {
 			serviceName = await promptUserForInput(/^([A-Z0-9]{5}|EXT[A-Z0-9]{1,})_[A-Z][A-Za-z0-9]+$/, "Nome del servizio: in formato XXXXX_NomeServizio(API|Service)");
 		} else {
-			finalpath = finalpath.replace(`\\${serviceName}`, ``);
+			const serviceToReplace = `${separator}${serviceName}`;
+			finalpath = finalpath.replace(serviceToReplace, ``);
 		}
 
 		if (!serviceName) { return; }
@@ -222,7 +223,9 @@ export function activate(context: vscode.ExtensionContext) {
 		if (!serviceVersion) {
 			serviceVersion = await promptUserForInput(/^[0-9]+\.[0-9]+$/, "Versione del servizio: in formato X.Y", "1\\.0");
 		} else {
-			finalpath = finalpath.replace(`\\v${serviceVersion}`, ``);
+			const versionToReplace = `${separator}v${serviceVersion}`;
+
+			finalpath = finalpath.replace(versionToReplace, ``);
 		}
 
 		if (!serviceVersion) { return; }
@@ -236,17 +239,17 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 
 		const foldersToCheck = [
-			`${finalpath}\\DocumentoArchitetturale`,
-			`${finalpath}\\DocumentoArchitetturale/Precedenti`,
-			`${finalpath}\\${serviceName}`,
-			`${finalpath}\\${serviceName}\\v${serviceVersion}`,
-			`${finalpath}\\${serviceName}\\v${serviceVersion}\\AnalisiFunzionale`,
-			`${finalpath}\\${serviceName}\\v${serviceVersion}\\AnalisiFunzionale\\Precedenti`,
-			`${finalpath}\\${serviceName}\\v${serviceVersion}\\DatiPerTest`,
-			`${finalpath}\\${serviceName}\\v${serviceVersion}\\MaterialeBanca`,
-			`${finalpath}\\${serviceName}\\v${serviceVersion}\\RichiestaDiEsposizione`,
-			`${finalpath}\\${serviceName}\\v${serviceVersion}\\RichiestaDiEsposizione\\Precedenti`,
-			`${finalpath}\\${serviceName}\\v${serviceVersion}\\${serviceType}`,
+			`${finalpath}${separator}DocumentoArchitetturale`,
+			`${finalpath}${separator}DocumentoArchitetturale${separator}Precedenti`,
+			`${finalpath}${separator}${serviceName}`,
+			`${finalpath}${separator}${serviceName}${separator}v${serviceVersion}`,
+			`${finalpath}${separator}${serviceName}${separator}v${serviceVersion}${separator}AnalisiFunzionale`,
+			`${finalpath}${separator}${serviceName}${separator}v${serviceVersion}${separator}AnalisiFunzionale${separator}Precedenti`,
+			`${finalpath}${separator}${serviceName}${separator}v${serviceVersion}${separator}DatiPerTest`,
+			`${finalpath}${separator}${serviceName}${separator}v${serviceVersion}${separator}MaterialeBanca`,
+			`${finalpath}${separator}${serviceName}${separator}v${serviceVersion}${separator}RichiestaDiEsposizione`,
+			`${finalpath}${separator}${serviceName}${separator}v${serviceVersion}${separator}RichiestaDiEsposizione${separator}Precedenti`,
+			`${finalpath}${separator}${serviceName}${separator}v${serviceVersion}${separator}${serviceType}`,
 		];
 
 
@@ -262,7 +265,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 
 		try {
-			let pppath = `${finalpath}\\${serviceName}\\v${serviceVersion}\\${serviceType}`;
+			let pppath = `${finalpath}${separator}${serviceName}${separator}v${serviceVersion}${separator}${serviceType}`;
 			await createFolderStructure(pppath);
 
 			await waitForFolderToExist(pppath);
@@ -284,7 +287,7 @@ export function activate(context: vscode.ExtensionContext) {
 			await fs.promises.writeFile(pomPath, pomContent, { flag: 'w' });
 
 
-			const placeholderPathAnalisi = `${finalpath}\\${serviceName}\\v${serviceVersion}\\AnalisiFunzionale\\placeholder.md`;
+			const placeholderPathAnalisi = `${finalpath}${separator}${serviceName}${separator}v${serviceVersion}${separator}AnalisiFunzionale${separator}placeholder.md`;
 			// Importa il modulo in modo asincrono
 			const { placeHolderTemplate } = await import("./resources/file_definitions");
 			const placeHolderTemplatefileContent = placeHolderTemplate();
@@ -292,7 +295,7 @@ export function activate(context: vscode.ExtensionContext) {
 			// Usa fs.promises.writeFile per scrivere il file in modo asincrono
 			await fs.promises.writeFile(placeholderPathAnalisi, placeHolderTemplatefileContent, { flag: 'w' });
 			
-			const placeholderPathRdE = `${finalpath}\\${serviceName}\\v${serviceVersion}\\RichiestaDiEsposizione\\placeholder.md`;
+			const placeholderPathRdE = `${finalpath}${separator}${serviceName}${separator}v${serviceVersion}${separator}RichiestaDiEsposizione${separator}placeholder.md`;
 			// Usa fs.promises.writeFile per scrivere il file in modo asincrono
 			await fs.promises.writeFile(placeholderPathRdE, placeHolderTemplatefileContent, { flag: 'w' });
 

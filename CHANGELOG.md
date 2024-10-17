@@ -4,6 +4,7 @@
 ### Changed
 
 - Aggiornata la versione di riferimento del validatore a 1.5.0 
+- corretta la compatibilità con i sistemi non windows
 
 ## [0.0.8] - 2024-04-02
 ### Changed
